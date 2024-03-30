@@ -7,6 +7,16 @@ using namespace std;
 
 int main() {
     while (true) {
+        cout << "To encrypt text, press 1. \n" <<
+             "To decrypt text, press 2. \n" <<
+             "To exit, press 3: \n";
+        int command;
+        cin >> command;
+
+        if (command == 3) {
+            break;
+        }
+
         cout << "Enter the key word: \n";
         string key;
         cin >> key;
@@ -17,17 +27,7 @@ int main() {
         bool flag = 0;
         while (!flag) {
             cin >> num;
-            if (num >= 1 && num <= 26) flag = 1; else cout << "Invalid number. Please enter a number between 1 and 26. \n";
-        }
-        
-        cout << "To encrypt text, press 1. \n" <<
-                "To decrypt text, press 2. \n" <<
-                "To exit, press 3: \n";
-        int command;
-        cin >> command;
-        
-        if (command == 3) {
-            break;
+            if (num >= 1 && num <= 26) flag = 1; else cout << "Invalid number. Please enter a number between 1 and 26: \n";
         }
 
         string text;
