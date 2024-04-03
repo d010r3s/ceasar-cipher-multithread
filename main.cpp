@@ -11,7 +11,7 @@ mutex mtx;
 //Encryption/Decryption
 void workWithText(int act, const string& key, int num, const string& text) {
     string alphabet = "abcdefghijklmnopqrstuvwxyz";
-    string alphabet0 = alphabet.substr(num) + alphabet.substr(0, num);
+    string alphabet0 = alphabet;
 
     string ukey = "";
     for (int i = 0; i < key.length(); i++) {
@@ -27,6 +27,7 @@ void workWithText(int act, const string& key, int num, const string& text) {
     }
 
     alphabet0 = ukey + alphabet0;
+    alphabet0 = alphabet0.substr(26 - num) + alphabet0.substr(0, 26 - num);
     string finalText;
 
     //Encryption
