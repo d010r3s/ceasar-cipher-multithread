@@ -119,8 +119,6 @@ int main() {
         t1.join();
         t2.join();
         t3.join();
-
-        cout << endl;
     }
 
     return 0;
