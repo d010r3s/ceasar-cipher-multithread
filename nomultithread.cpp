@@ -11,7 +11,7 @@ using namespace std;
 //Encryption/Decryption
 string workWithText(int act, const string& key, int num, const string& text) {
     string alphabet = "abcdefghijklmnopqrstuvwxyz";
-    string alphabet0 = alphabet.substr(num) + alphabet.substr(0, num);
+    string alphabet0 = alphabet;
 
     string ukey = "";
     for (int i = 0; i < key.length(); i++) {
@@ -25,8 +25,8 @@ string workWithText(int act, const string& key, int num, const string& text) {
         char ch = key[i];
         alphabet0.erase(remove(alphabet0.begin(), alphabet0.end(), ch), alphabet0.end());
     }
-
     alphabet0 = ukey + alphabet0;
+    alphabet0 = alphabet0.substr(26 - num) + alphabet0.substr(0, 26 - num);
     string finalText;
 
     //Encryption
