@@ -1,9 +1,67 @@
-#include <algorithm>
 #include <iostream>
+#include <thread>
+#include <mutex>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
+mutex mtx;
+
+//Encryption/Decryption
+void workWithText(int act, const string& key, int num, const string& text) {
+    string alphabet = "abcdefghijklmnopqrstuvwxyz";
+    string alphabet0 = alphabet.substr(num) + alphabet.substr(0, num);
+
+    string ukey = "";
+    for (int i = 0; i < key.length(); i++) {
+        char ch = key[i];
+        if (find(ukey.begin(), ukey.end(), ch) == ukey.end()) {
+            ukey += ch;
+        }
+    }
+
+    for (int i = 0; i < key.length(); i++) {
+        char ch = key[i];
+        alphabet0.erase(remove(alphabet0.begin(), alphabet0.end(), ch), alphabet0.end());
+    }
+
+    alphabet0 = ukey + alphabet0;
+    string finalText;
+
+    //Encryption
+    if (act == 1) {
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text[i];
+            if (ch >= 97 && ch <= 123) {
+                size_t j = alphabet.find(ch);
+                finalText += alphabet0[j];
+            } else {
+                finalText += ch;
+            }
+        }
+    }
+
+    //Decryption
+    if (act == 2) {
+        for (int i = 0; i < text.length(); i++) {
+            char ch = text[i];
+            if (ch >= 97 && ch <= 123) {
+                size_t j = alphabet0.find(ch);
+                finalText += alphabet[j];
+            } else {
+                finalText += ch;
+            }
+        }
+    }
+
+    //Correct stream output
+    {
+        lock_guard<std::mutex> lock(mtx);
+        cout << finalText;
+    }
+}
+
 
 int main() {
     while (true) {
@@ -27,74 +85,40 @@ int main() {
         bool flag = 0;
         while (!flag) {
             cin >> num;
-            if (num >= 1 && num <= 26) flag = 1; else cout << "Invalid number. Please enter a number between 1 and 26: \n";
+            if (num >= 1 && num <= 26) flag = 1;
+            else cout << "Invalid number. Please enter a number between 1 and 26: \n";
         }
 
-        string text;
+        cout << "Enter the text. Press enter twice to finish:\n";
         cin.ignore();
-        if (command == 1) {
-            cout << "Enter the text that needs to be encrypted: \n";
-            getline(cin, text);
-        } else if (command == 2) {
-            cout << "Enter the text that needs to be decrypted: \n";
-            getline(cin, text);
-        }
 
-        vector<char> alphabet(26);
-        for (int i = 0; i < key.length(); i++) {
-            alphabet[num + i] = key[i];
-        }
-
-        vector<char> a;
-        for (int k = 97; k < 123; k++) {
-            if (std::find(key.begin(), key.end(), char(k)) == key.end()) {
-                a.push_back(char(k));
+        //Saving everything entered into the text
+        string text, part1, part2, part3;
+        string line;
+        while (getline(cin, line)) {
+            if (line.empty()) {
+                break;
             }
+            text += line + '\n';
         }
 
-        int start = num + key.length();
-        int n = 0;
-        for (int j = start; j < 26; j++) {
-            alphabet[j] = a[n];
-            n++;
-        }
-        if (num != 0) {
-            for (int l = 0; l < num; l++) {
-                alphabet[l] = a[n];
-                n++;
-            }
-        }
+        //For each stream - 1/3 of the text
+        int partLength = text.length() / 3;
 
-        if (command == 1) {
-            string encryptedText;
-            for (int i = 0; i < text.length(); i++) {
-                if (text[i] == ' ') {
-                    encryptedText += ' ';
-                } else {
-                    encryptedText += alphabet[text[i] - 97];
-                }
-            }
-            cout << "Encrypted text: \n" << encryptedText << endl;
-        }
+        part1 = text.substr(0, partLength);
+        part2 = text.substr(partLength, partLength);
+        part3 = text.substr(2 * partLength);
 
-        if (command == 2) {
-            string decryptedText;
-            for (int i = 0; i < text.length(); i++) {
-                if (text[i] == ' ') {
-                    decryptedText += ' ';
-                } else {
-                    for (int k = 0; k < alphabet.size(); k++) {
-                        if (text[i] == alphabet[k]) {
-                            decryptedText += char(k + 97);
-                            break;
-                        }
-                    }
-                }
-            }
-            cout << "Decrypted text: \n" << decryptedText << endl;
-        }
+        cout << (command == 1 ? "Encrypted text: " : "Decrypted text: ") << endl;
+
+        thread t1(workWithText, command, key, num, part1);
+        thread t2(workWithText, command, key, num, part2);
+        thread t3(workWithText, command, key, num, part3);
+
+        t1.join();
+        t2.join();
+        t3.join();
     }
 
     return 0;
 }
-
