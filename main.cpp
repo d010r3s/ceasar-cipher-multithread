@@ -1,15 +1,25 @@
 #include <iostream>
-#include <thread>
-#include <mutex>
 #include <string>
 #include <vector>
 #include <algorithm>
 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
+#include <ctime>
+
 using namespace std;
 mutex mtx;
+condition_variable cv1, cv2, cv3;
+int current_thread = 1; // Variable to keep track of the current thread
+
+
 
 //Encryption/Decryption
-void workWithText(int act, const string& key, int num, const string& text) {
+void workWithText(int act, const string& key, int num, const string& text, int flag) {
+    unique_lock<mutex> lock(mtx);
+
     string alphabet = "abcdefghijklmnopqrstuvwxyz";
     string alphabet0 = alphabet;
 
@@ -57,9 +67,24 @@ void workWithText(int act, const string& key, int num, const string& text) {
     }
 
     //Correct stream output
-    {
-        lock_guard<std::mutex> lock(mtx);
-        cout << finalText;
+    // The thread waits for its turn
+    while (current_thread != flag) {
+        if (flag == 2)
+            cv2.wait(lock);
+        else if (flag == 3)
+            cv3.wait(lock);
+    }
+    
+    cout << finalText;
+    
+    // Switch to the next stream
+    if (current_thread == 1) {
+        current_thread = 2;
+        cv2.notify_one();
+    }
+    else if (current_thread == 2) {
+        current_thread = 3;
+        cv3.notify_one();
     }
 }
 
@@ -102,7 +127,9 @@ int main() {
             }
             text += line + '\n';
         }
-
+        
+        cout << (command == 1 ? "Encrypted text: " : "Decrypted text: ") << endl;
+        
         //For each stream - 1/3 of the text
         int partLength = text.length() / 3;
 
@@ -110,12 +137,14 @@ int main() {
         part2 = text.substr(partLength, partLength);
         part3 = text.substr(2 * partLength);
 
-        cout << (command == 1 ? "Encrypted text: " : "Decrypted text: ") << endl;
-
-        thread t1(workWithText, command, key, num, part1);
-        thread t2(workWithText, command, key, num, part2);
-        thread t3(workWithText, command, key, num, part3);
-
+        int flag1 = 1, flag2 = 2, flag3 = 3;
+        thread t1(workWithText, command, key, num, part1, flag1);
+        thread t2(workWithText, command, key, num, part2, flag2);
+        thread t3(workWithText, command, key, num, part3, flag3);
+        
+        //Start with the first thread
+        cv1.notify_one();
+        
         t1.join();
         t2.join();
         t3.join();
